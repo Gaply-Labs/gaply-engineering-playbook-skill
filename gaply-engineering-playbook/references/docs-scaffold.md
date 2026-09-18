@@ -97,7 +97,7 @@ Meaningful product, architecture, and behavior changes. Not a replacement for Gi
 
 ### `docs/07-feature-status.md`
 
-A feature table with at least: Feature ID, Name, Status, Documentation path, Notes or blocker. Statuses: `PLANNED | READY | IN_PROGRESS | BLOCKED | DONE | DEFERRED | CANCELLED`.
+A feature table with at least: Feature ID, Name, Status, Documentation path, Notes or blocker. Statuses: `PLANNED | READY | IN_PROGRESS | BLOCKED | DONE | DEFERRED | CANCELLED`. A feature scaffolded from the brief is `PLANNED` even when open questions block parts of it; note the blocking question IDs in the Notes column. `BLOCKED` means work has started and cannot continue, which `init` alone never establishes.
 
 ### `docs/08-tech-stack.md`
 
@@ -120,7 +120,7 @@ Must contain:
 - Flow references, or a pointer to `flows.md`.
 - For a project without a UI: `N/A` with the reason from the brief.
 
-Recommended files next to it, created when their content exists:
+Recommended files next to it. Create one as soon as the sources name its subject, even when only names are known, and mark the unknown parts `pending design`; an empty heading with a status is more useful to the next reader than a missing file. Skip a file entirely when the sources say nothing about its subject:
 
 - `screens.md`: one section per screen with its states (empty, loading, error, success) and responsive notes.
 - `flows.md`: user flows step by step, cross-referenced to feature IDs.

@@ -132,6 +132,11 @@ Statuses:
 - `N/A`: the item does not apply to this project type, with the reason.
 - `PASS`: present and consistent, with evidence.
 
+Two cases the vocabulary does not cover on its own:
+
+- A placeholder asset that is present and correctly labeled is `PASS`, with `placeholder` in its Evidence cell and "replace with the final asset before release" as its required action. A placeholder is a recorded gap, not a broken document, so it does not by itself make the documentation out of sync.
+- When a comparison has no counterpart yet, say the docs describe a stack but no code or manifests exist, the row is `PASS` with `nothing to contradict` in Evidence. Reserve `UNVERIFIED` for a comparison that should have been possible but could not be made, such as missing history for the `HANDOFF.md` and changelog rows.
+
 Compare each document against the repository:
 
 | Document | Compare against | `OUTDATED` when |
