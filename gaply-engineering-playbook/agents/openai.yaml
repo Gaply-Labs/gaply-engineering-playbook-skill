@@ -1,0 +1,7 @@
+interface:
+  display_name: "GEP"
+  short_description: "Gaply project precheck, docs init, and release audit"
+  default_prompt: "Run the requested GEP action: chk, init, or pchk. Default to English unless the user specifies another language."
+
+policy:
+  allow_implicit_invocation: true
