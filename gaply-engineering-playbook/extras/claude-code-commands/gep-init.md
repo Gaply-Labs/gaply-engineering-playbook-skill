@@ -1,3 +1,8 @@
-Use the `gep` skill and run action `init` on the current repository.
+---
+description: GEP documentation init or sync (gaply-engineering-playbook init)
+---
+Use the `gaply-engineering-playbook` skill and run action `init` on the current repository.
 
-Pass through any arguments from the user as action parameters, including language requests. Follow the skill's preflight, initialization, and post-init verification rules.
+Parameters from the user (may be empty): $ARGUMENTS
+
+Follow the skill's preflight, brief analysis, scaffold, gap detection, and report rules.

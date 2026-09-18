@@ -1,8 +1,10 @@
-Gaply Engineering Playbook Skill v1.0.0
+Gaply Engineering Playbook Skill v1.1.0
 
 Repository package contents:
+./CLAUDE.md
 ./CONTENTS.txt
 ./README.md
+./README.fa.md
 ./VERSION
 ./gaply-engineering-playbook/SKILL.md
 ./gaply-engineering-playbook/agents/openai.yaml

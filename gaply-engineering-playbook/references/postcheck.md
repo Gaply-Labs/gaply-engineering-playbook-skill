@@ -8,6 +8,7 @@ The audit must compare documentation claims with the actual repository and avail
 
 - Final Project Name is consistent across product brief, application metadata/title, package/config where relevant, and public metadata.
 - Final logo exists and is not a bootstrap/default placeholder.
+- `docs/assets/README.md` lists every shipped asset as `final`; any `*-default.*` file still referenced by the build, metadata, or UI is a blocking `FAIL`.
 - Final favicon exists and is wired into the production application/build.
 - App/product icon exists where the platform requires it.
 - Final OG/social image exists and is exactly 1200×630 px.
@@ -100,7 +101,8 @@ Verify evidence for:
 - feature status synchronized with actual implementation;
 - changelog updated;
 - HANDOFF updated;
-- `docs/09-release-readiness.md` updated with reviewer/evidence.
+- `docs/09-release-readiness.md` updated with reviewer/evidence;
+- `docs/ui/README.md` screen statuses match the implemented screens.
 
 ## 7. Status rules
 
