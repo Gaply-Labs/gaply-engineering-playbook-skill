@@ -50,8 +50,8 @@ When the project contains only a brief, `init` still creates the whole tree. Thi
 | `docs/08-tech-stack.md` | Partly: technologies named in the brief | Versions from manifests | Manifests exist |
 | `docs/09-release-readiness.md` | Yes: every row created with status `PENDING` and empty evidence | Evidence | `pchk` |
 | `docs/features/Fxxx-name.md` | Partly: Status, Goal, User and User Flow, Business Rules, scope-derived Acceptance Criteria | API contract, UX states, validation, tests, edge cases | Implementation and design |
-| `docs/ui/README.md` | Partly: design source (tool, link or "pending"), screen names from the brief with status `pending design` | Screenshots, states | Design export |
-| `docs/assets/README.md` | Yes: inventory of the placeholders created | Final assets | Brand delivery |
+| `docs/ui/README.md` | Partly: design source (tool, link or "pending"), screen names from the brief with status `pending design` | Screenshots, states, the design package | Design export |
+| `docs/assets/README.md` | Yes: inventory of every asset found plus the placeholders created | Final assets | Brand delivery |
 
 ## 3. Minimum content by file
 
@@ -125,24 +125,31 @@ Recommended files next to it. Create one as soon as the sources name its subject
 - `screens.md`: one section per screen with its states (empty, loading, error, success) and responsive notes.
 - `flows.md`: user flows step by step, cross-referenced to feature IDs.
 - `screenshots/`: one PNG per key screen, named `screen-<slug>.png`.
-- `design-tokens.md`: when a design system or token set exists.
+
+When the design is built with Claude Design, the package itself lands here: `masterdoc.html` at the root of `docs/ui/`, then `pages/`, or `desktop/` and `mobile/` when the two are separate previews. `masterdoc.html` carries the whole design system and is the only source of truth for every page. `references/ui-design.md` has the full workflow, the file structure per project scope, and the context pack to send Claude Design.
 
 ### `docs/assets/README.md`
 
-An inventory table: `File | Purpose | Status (placeholder | final) | Dimensions | Used in`.
+An inventory table with one row per asset: `File | Kind | Purpose | Status | Dimensions | Used in`.
 
-Naming: `logo-default.svg`, `favicon-default.svg`, and `og-default.png` are placeholders. Final assets are `logo.svg` (or `.png`), a favicon set (`favicon.svg`, `favicon.ico`, PNG sizes as the platform requires), and `og.png` at exactly 1200x630. Release replaces every placeholder row with a final row.
+`Kind` is one of `logo`, `banner`, `favicon`, `og`, `other`. `Status` is `placeholder` or `final`. The inventory covers every brand asset the project has, including assets the application serves from `public/` or `static/` that were deliberately not moved; for those, the `File` column carries their real path so nobody goes looking in `docs/assets/` for them.
+
+Naming: `logo-default.svg`, `favicon-default.svg`, and `og-default.png` are placeholders, and the `*-default.*` suffix is what tells tooling and `pchk` that they are. Final assets keep whatever name the project already uses; there is no requirement to rename a working `company-logo.png`. A favicon set stays a folder, `docs/assets/favicon/`. The OG image must be exactly 1200x630 whatever it is called.
+
+Generate a missing favicon set with https://favicon.io/favicon-converter/, and a missing mobile app icon set with https://www.digia.tech/tools/app-icon-generator/.
 
 ## 4. UI archive
 
 Target location: `docs/ui/`.
 
-If the source is a code prototype, preserve its package structure when practical. If the source is an external design, store a reference file plus available key screenshots. If the brief names screens but no design exists yet, list them in `docs/ui/README.md` as `pending design`. If no UI applies, document why.
+If the source is a code prototype or a Claude Design package, preserve its structure. If the source is an external design, store a reference file plus available key screenshots; a link alone is not enough, because the repository goes blind the moment access changes. If the brief names screens but no design exists yet, list them in `docs/ui/README.md` as `pending design`. If no UI applies, document why. `references/ui-design.md` has the detail.
 
 ## 5. Asset archive
 
-Target location: `docs/assets/`.
+Target location: `docs/assets/`, which holds every brand asset the project owns.
 
-Bootstrap minimum: `logo-default.svg` (or an equivalent clearly labeled placeholder), `og-default.png` at exactly 1200x630, `favicon-default.svg` (or equivalent), and an inventory row for each in `docs/assets/README.md`.
+Four kinds are tracked: logo, banner, favicon or app icon set, and OG/social image. They are found by name pattern rather than by one fixed path, so assets a project already had are detected under their own names; `references/precheck.md` section 1.5 has the patterns and the rule for what `init` may move.
 
-Final release must replace placeholders with final brand assets.
+Bootstrap minimum when a kind is absent: `logo-default.svg`, `favicon-default.svg`, `og-default.png` at exactly 1200x630, and an inventory row for each in `docs/assets/README.md`. There is no placeholder for a banner; an absent banner is reported as a gap with a recommendation instead of invented.
+
+Final release must replace every placeholder with a final brand asset.

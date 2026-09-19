@@ -1,6 +1,6 @@
 ---
 name: gaply-engineering-playbook
-description: Gaply Engineering Playbook (GEP) project bootstrap, documentation sync, and release-audit skill. Use it whenever the user wants to check, initialize, scaffold, synchronize, or audit a software project's documentation under GEP or the Gaply Engineering Playbook, wants project documentation created from a brief or PRD (for example "initialize this project from brief.md"), asks what documentation is missing, outdated, or inconsistent with the code, or uses commands such as gep chk, gep init, gep pchk, precheck, init, sync, postcheck. It inspects the repository, validates project inputs and brand/UI assets, creates the standard documentation scaffold without inventing business requirements, reports every gap with a concrete recommendation, and performs evidence-based release checks.
+description: Gaply Engineering Playbook (GEP) project bootstrap, documentation sync, brand-asset organisation, UI design workflow, and release-audit skill. Use it whenever the user wants to check, initialize, scaffold, synchronize, or audit a software project's documentation under GEP or the Gaply Engineering Playbook, wants project documentation created from a brief or PRD (for example "initialize this project from brief.md"), asks what documentation, brand assets, SEO or discovery files are missing or inconsistent, wants a logo, banner, favicon or OG image found and tidied into docs/assets/, wants the UI designed with Claude Design, or uses commands such as gep chk, gep init, gep pchk, precheck, init, sync, postcheck. It creates the standard documentation scaffold without inventing requirements, reports every gap with a concrete recommendation, and ends every run with a final checklist.
 ---
 
 # GEP - Gaply Engineering Playbook Skill
@@ -68,6 +68,8 @@ The skill instructions themselves are authoritative regardless of output languag
 - During `init`, create or update documentation and bootstrap assets only. Do not implement product features unless the user explicitly asks separately.
 - `init` never stops because folders or assets other than the requirements source are missing. A brief alone is enough input: scaffold what the brief supports, create clearly labeled placeholders where the standard requires an asset, and report the rest as gaps.
 - Every missing item in a report comes with a concrete recommendation: the path to create, the default file names, and which documentation or check will consume it. A list of what is absent, on its own, is not a finished report.
+- Detect brand assets by name pattern, never by one exact path. A project that already has a logo rarely has it where the playbook would have put it, and reporting a file as missing while the user is looking at it destroys trust in the whole report.
+- Every action ends with the Final Checklist from `references/final-checklist.md`, and nothing follows it.
 - If a requirement is not applicable, mark it `N/A` and state why.
 - If a fact cannot be verified, report it as `UNVERIFIED`; do not present it as `PASS`.
 - Prefer actual repository evidence over claims written in documentation.
@@ -81,12 +83,17 @@ Work from the current repository/project root. Before any action:
 2. Locate the requirements source: the `source=` parameter first, then likely brief/PRD files (see `references/precheck.md`).
 3. Locate existing documentation folders (`docs/`, `doc/`, or project-specific equivalents). `docs/docs-manifest.md` marks a GEP-initialized project.
 4. Locate UI/design sources (`docs/ui/`, `ui/`, `design/`, Figma/XD references, screenshots, prototype packages).
-5. Locate brand assets and public/static asset folders.
+5. Locate brand assets by name pattern: logo, banner, favicon or app icon set, and OG/social image. Match the file name or the folder name, so a user's own `company-logo.png` or a seven-file `favicon/` folder is found. `references/precheck.md` section 1.5 has the patterns, and section 1.6 covers discovery files (`robots.txt`, `sitemap.xml`, `llms.txt`, web app manifest).
 6. Detect the technology stack from manifests and configuration files.
 7. Read the requirements source and classify the project type (public web app, authenticated web app, mobile app, backend/API only, CLI or library, hybrid). The type decides which checks apply: UI archive, SEO, payments, public assets. Record the classification and its evidence; when the brief does not settle it, record an open question instead of guessing.
 8. Do not assume a missing item is absent until reasonable filename/path variants have been checked.
 
-When Python is available, run `scripts/gep_scan.py --root . --json` for deterministic structure, asset, image-dimension, and referenced-but-missing checks. Treat its output as evidence, not as a substitute for reading the repository. During `init`, if bootstrap visual assets are missing and a confirmed Project Name exists, prefer `scripts/create_bootstrap_assets.py --project-name "<name>"` to create deterministic placeholders without third-party dependencies.
+When Python is available, run `scripts/gep_scan.py --root . --json` for deterministic structure, asset, image-dimension, discovery-file, and referenced-but-missing checks. Treat its output as evidence, not as a substitute for reading the repository.
+
+Two scripts write, and only during `init`:
+
+- `scripts/organize_assets.py --root . --apply` moves brand assets that sit loose under `docs/` into `docs/assets/`, keeping set folders intact, and lists every document that mentions a moved file.
+- `scripts/create_bootstrap_assets.py --project-name "<name>"` creates placeholder assets without third-party dependencies.
 
 ## 5. Action: `chk` - Check
 
@@ -124,7 +131,7 @@ Then output exactly one overall result:
 
 Only two conditions block `init`: no confirmed Project Name, or no usable brief/requirements source. Missing `docs/`, `docs/ui/`, or bootstrap visual assets are not blockers; report them as targets `init` will create. If the project needs real UI source material for accurate documentation and none exists, mark UI-specific content `UNVERIFIED` and do not invent it.
 
-End with a `Next step:` line, normally `gep init` (or `gep init project="<name>"` when the name is the only blocker).
+End with a `Next step:` line, normally `gep init` (or `gep init project="<name>"` when the name is the only blocker), then the Final Checklist (section 8).
 
 ### 5.2 Mode B: documentation health
 
@@ -147,7 +154,7 @@ Then output exactly one overall result:
 - `GEP DOCS IN SYNC`: no `MISSING` or `OUTDATED` item, and no `UNVERIFIED` item on the required structure.
 - `GEP DOCS OUT OF SYNC`: otherwise.
 
-List `Unverified items` separately, then end with a `Next step:` line: `gep init` to fill gaps while preserving existing content, or `gep pchk` when the project is heading to release. Mode B never replaces `pchk`.
+List `Unverified items` separately, then a `Next step:` line: `gep init` to fill gaps while preserving existing content, or `gep pchk` when the project is heading to release. Mode B never replaces `pchk`. End with the Final Checklist (section 8).
 
 ## 6. Action: `init` - Initialize or synchronize GEP documentation
 
@@ -219,19 +226,19 @@ docs/
 
 Create feature documents only for features supported by the brief, existing code, or explicit requirements. Do not invent a feature list. Fill each file with what the sources support and mark the remaining sections `Open` with a pointer to the relevant open question, so a reader can tell "not yet known" from "not applicable".
 
-### 6.5 Identity and bootstrap assets
+### 6.5 Brand assets: find, consolidate, then fill gaps
 
-Use the confirmed Project Name.
+Four kinds are tracked: logo, banner, favicon or app icon set, and OG/social image. Work in this order, because creating a placeholder next to an asset the project already had is the failure this order prevents.
 
-If final brand assets are unavailable, ensure bootstrap assets exist under `docs/assets/`:
+**Find.** Search by the name patterns in `references/precheck.md` section 1.5, matching file names and folder names. Never conclude a kind is missing from one path being empty.
 
-- `logo-default.svg`, a clearly labeled placeholder logo;
-- `og-default.png` at exactly 1200x630 px;
-- `favicon-default.svg`, a clearly labeled placeholder favicon.
+**Consolidate.** `docs/assets/` holds every brand asset the project owns. Assets found elsewhere under `docs/` are moved into it, preserving set folders so `docs/favicon/` becomes `docs/assets/favicon/`. Run `scripts/organize_assets.py --root . --apply`, then correct the links in the documents it lists. Assets the application serves from `public/`, `static/`, `src/`, `app/`, `assets/`, `www/`, `resources/`, or `web/` are **never moved**; moving them breaks the build. Reference them in the inventory at their real path instead.
 
-If Python execution is available, use `scripts/create_bootstrap_assets.py` to create simple non-branded placeholders. Otherwise create equivalent placeholders only if the environment safely supports it; if not, create the target paths and manifest entries and report asset generation as pending. Record every asset in `docs/assets/README.md` with its status (`placeholder` or `final`) and dimensions. Never describe a placeholder as a final brand asset.
+**Fill gaps.** Only for a kind with no asset at all, create a clearly labeled placeholder under `docs/assets/`: `logo-default.svg`, `og-default.png` at exactly 1200x630, `favicon-default.svg`. Use `scripts/create_bootstrap_assets.py` when Python is available; otherwise create the paths and inventory rows and report generation as pending. There is no placeholder banner: an absent banner is reported as a gap. Never describe a placeholder as a final brand asset.
 
-If final assets already exist, preserve and reference them rather than creating placeholders.
+**Record.** Every asset gets a row in `docs/assets/README.md`: file, kind, purpose, status (`placeholder` or `final`), dimensions, and where it is used. Assets left in application folders appear with their real path.
+
+For a missing favicon set recommend https://favicon.io/favicon-converter/, and for a missing mobile app icon set https://www.digia.tech/tools/app-icon-generator/. Recommend the tool rather than producing a fake final asset.
 
 ### 6.6 UI archive
 
@@ -243,12 +250,14 @@ If a valid UI/design source exists, archive or reference it under `docs/ui/` acc
 
 When the brief names screens but no design export exists, list the screens in `docs/ui/README.md` with status `pending design`. Do not fabricate screenshots or design states.
 
+When the user asks for the UI itself to be designed, read `references/ui-design.md` and follow it. It covers the Claude Design setup (a blank project with no preset design system, `masterdoc.html` at the root carrying the whole design system and the preview entry points), the file structure per project scope, the rule that every page treats `masterdoc.html` as the only source of truth, the interactivity and mock-data requirements, and the context pack to send.
+
 ### 6.7 Detect gaps
 
 After writing, compare what the sources reference with what exists on disk, using the signal table in `references/precheck.md` and the scanner's `referenced_but_missing` output as evidence. A gap is any of:
 
 - a folder or file the standard tree requires that could not be created;
-- something the brief or docs mention (screens, wireframes, brand, logo, favicon, OG image, API, payments, auth) with no corresponding folder, file, or documented decision;
+- something the brief or docs mention (screens, wireframes, brand, logo, banner, favicon, OG image, SEO and discovery files, PWA manifest, API, payments, auth) with no corresponding folder, file, or documented decision;
 - a placeholder standing in for a final asset;
 - a required document section left `Open`.
 
@@ -288,6 +297,9 @@ Item | Status | Evidence
 
 **Result:** GEP INIT COMPLETE | GEP INIT INCOMPLETE
 **Next step:** <one sentence: what the user should do now>
+
+## Final Checklist
+<the checklist from references/final-checklist.md>
 ```
 
 Verification statuses are `PASS`, `MISSING`, and `UNVERIFIED`. A placeholder asset that exists with the right dimensions is `PASS` with `placeholder` stated in its Evidence cell, and it is also listed under `Missing or placeholder` so nobody mistakes it for a final asset.
@@ -306,9 +318,13 @@ At minimum evaluate:
 
 - final Project Name consistency;
 - final logo;
-- final favicon;
+- final banner where the product uses one;
+- final favicon or app icon set, wired into the build;
 - final OG/social image exactly 1200x630 px;
+- every brand asset consolidated under `docs/assets/` and inventoried;
 - public social/OG metadata;
+- discovery files in the served root: `robots.txt`, `sitemap.xml`, `llms.txt` where applicable;
+- web app manifest and declared icon sizes for PWA or installable products;
 - payment/monetization integration when applicable, including the user-selected provider such as RevenueCat, Stripe, MoonPay, or another provider;
 - SEO metadata;
 - semantic heading hierarchy (`h1`, `h2`, `h3`, ...);
@@ -353,7 +369,17 @@ Rules:
 
 Do not fix issues during `pchk` unless the user explicitly asks for remediation after seeing the report.
 
-## 8. Evidence quality
+End with the Final Checklist (section 8), including its engineering group.
+
+## 8. Final Checklist
+
+Every action ends with a compact checklist built from `references/final-checklist.md`, and nothing follows it. The detail stays in the sections above; the checklist exists so that a reader who scrolls to the bottom sees, in one screen, what is present, what is incomplete, and what is absent.
+
+Markers are `[x]` present and correct, `[~]` present but incomplete, placeholder, or not wired in, `[ ]` absent, and `[-]` not applicable with the reason. Groups run in this order: documentation, brand assets, UI and design, discovery and crawling, metadata and social, platform and PWA, engineering (`pchk` only), and the action's result string as the final line.
+
+Never round `[~]` up to `[x]`. The gap between them is what stops a release.
+
+## 9. Evidence quality
 
 Prefer evidence in this order:
 
@@ -367,12 +393,14 @@ Label inference as inference.
 
 For each failed, missing, outdated, or unverified item, include the exact file/path when available.
 
-## 9. Supporting references
+## 10. Supporting references
 
 Use these files as needed:
 
-- `references/precheck.md`: discovery rules, Project Name resolution, project-type signals, the referenced-but-missing signal table, and both `chk` modes.
-- `references/docs-scaffold.md`: required documentation structure, minimum contents, recommended files for `docs/ui/` and `docs/assets/`, and the brief-to-document source-coverage table.
-- `references/postcheck.md`: final release-readiness checklist.
+- `references/precheck.md`: discovery rules, Project Name resolution, project-type signals, brand-asset name patterns and placement rules, discovery files, the referenced-but-missing signal table, and both `chk` modes.
+- `references/docs-scaffold.md`: required documentation structure, minimum contents, the `docs/ui/` and `docs/assets/` index files, and the brief-to-document source-coverage table.
+- `references/postcheck.md`: final release-readiness checklist, including SEO, discovery, and platform files.
+- `references/final-checklist.md`: the closing checklist every action ends with.
+- `references/ui-design.md`: the Claude Design workflow, `masterdoc.html`, file structure, context pack, and design archiving.
 
 Load only the references the requested action needs. `extras/` holds optional installer conveniences (Claude Code slash-command wrappers) and is not a runtime reference.

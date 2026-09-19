@@ -8,7 +8,9 @@ The audit must compare documentation claims with the actual repository and avail
 
 - Final Project Name is consistent across product brief, application metadata/title, package/config where relevant, and public metadata.
 - Final logo exists and is not a bootstrap/default placeholder.
+- Final banner exists when the product has a marketing or repository surface that uses one.
 - `docs/assets/README.md` lists every shipped asset as `final`; any `*-default.*` file still referenced by the build, metadata, or UI is a blocking `FAIL`.
+- No brand asset is still loose under `docs/` outside `docs/assets/`; the scanner reports these as `assets_misplaced`.
 - Final favicon exists and is wired into the production application/build.
 - App/product icon exists where the platform requires it.
 - Final OG/social image exists and is exactly 1200×630 px.
@@ -30,7 +32,7 @@ Otherwise verify:
 
 Do not infer a working payment integration merely from an installed SDK.
 
-## 3. SEO & Social Metadata
+## 3. SEO, Discovery & Social Metadata
 
 For public/indexable products verify as applicable:
 
@@ -48,7 +50,17 @@ For public/indexable products verify as applicable:
 - final `og:image` resolves to the final 1200×630 asset;
 - structured data is used only when it truthfully matches page content.
 
-For authenticated/internal-only applications, mark non-applicable SEO items `N/A` with reason; accessibility and semantic markup still apply.
+Discovery and platform files, checked in the served root rather than in `docs/`:
+
+- `robots.txt` exists and its directives match the intent. An authenticated product still needs one, to disallow.
+- `sitemap.xml` exists for a public indexable site, is reachable, and is referenced from `robots.txt`. A sitemap generated at build time counts when the build output or the generator configuration is evidence.
+- `llms.txt` exists when the product wants to be usable by AI agents. Recommend it rather than blocking on it, unless the brief asks for it.
+- A web app manifest (`site.webmanifest`, `manifest.webmanifest`, or `manifest.json`) exists for PWA and installable products, declares the icon sizes it references, and those icon files exist.
+- Icon sizes the target platforms require are present, and for mobile products the store icon set exists.
+
+A manifest or favicon file that sits only in `docs/assets/` is a source asset. It passes this section only when the application actually serves or references it.
+
+For authenticated/internal-only applications, mark non-applicable SEO items `N/A` with reason; `robots.txt`, accessibility, and semantic markup still apply.
 
 ## 4. W3C & Accessibility
 
@@ -102,7 +114,8 @@ Verify evidence for:
 - changelog updated;
 - HANDOFF updated;
 - `docs/09-release-readiness.md` updated with reviewer/evidence;
-- `docs/ui/README.md` screen statuses match the implemented screens.
+- `docs/ui/README.md` screen statuses match the implemented screens;
+- the implemented UI matches the design package; where the design was built with Claude Design, `masterdoc.html` is still the design system the code follows.
 
 ## 7. Status rules
 
@@ -119,3 +132,10 @@ Overall:
 - any blocking FAIL => `NOT READY`;
 - no blocking FAIL but critical UNVERIFIED items => `NOT VERIFIED`;
 - all applicable blocking checks evidenced as PASS => `READY`.
+
+## 8. Final Checklist
+
+`pchk` ends with the checklist in `references/final-checklist.md`, including group 7
+(engineering), and nothing follows it. Every `FAIL` in the tables above must appear as
+`[ ]` or `[~]` in the checklist; a checklist that disagrees with the body of the report is
+worse than no checklist.

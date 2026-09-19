@@ -56,23 +56,60 @@ Status:
 - `MISSING`: nothing on disk and no link; the brief may still name the tool. A `docs/ui/README.md` that lists screens as `pending design` documents this gap; it is not a design source and does not change the status.
 - `N/A`: the brief supports a project without a UI.
 
-### 1.5 Logo
+### 1.5 Brand assets
 
-Search `docs/assets/logo*`, `public/logo*`, `static/logo*`, `assets/logo*`, and brand or design source folders.
+Four asset kinds are tracked: logo, banner, favicon or app icon set, and OG/social image.
 
-For initial readiness, either a final logo or a clearly labeled bootstrap logo (`logo-default.*`) is acceptable.
+Detect them **by name pattern, not by one exact path**. A project that already has a logo almost never has it at the path the playbook would have chosen, and reporting `MISSING` next to a file the user is looking at destroys trust in the whole report. Recognise an asset when either the file name or the folder name matches:
 
-### 1.6 OG / social image
+| Kind | File name contains | Folder name | Extensions |
+| --- | --- | --- | --- |
+| Logo | `logo`, `logotype`, `logomark`, `wordmark`, `brandmark`, `brand` | `logo/`, `logos/`, `brand/`, `branding/` | png, jpg, svg, webp, avif, gif |
+| Banner | `banner`, `hero`, `cover`, `header-image`, `masthead` | `banner/`, `banners/` | same |
+| Favicon / app icon | `favicon`, `apple-touch-icon`, `android-chrome`, `mstile`, `safari-pinned-tab`, `site.webmanifest` | `favicon/`, `favicons/`, `icons/`, `app-icon/` | same, plus `.ico` and `.webmanifest` |
+| OG / social | `og`, `opengraph`, `social`, `share`, `twitter-card`, `preview`, `card` | `og/`, `social/`, `opengraph/` | same |
 
-Search `docs/assets/og*`, `docs/assets/social*`, `public/og*`, `public/social*`, `assets/og*`, `assets/social*`.
+Separators count: `company-logo.png`, `logo_dark.svg`, and `Logo.PNG` all match. A whole folder matches too, which is how a seven-file favicon set from a generator is found.
 
-Initial requirement: the image exists or can be scaffolded, and the target resolution is exactly 1200x630 px. If an image exists but its dimensions cannot be verified, mark `UNVERIFIED`.
+`scripts/gep_scan.py --json` reports this under `assets`, one list per kind, each entry carrying `path`, `placement`, `dimensions`, and `is_placeholder`.
 
-### 1.7 Favicon
+#### Placement decides what `init` may do
 
-Search `docs/assets/favicon*`, `public/favicon*`, `app/favicon*`, `assets/favicon*`, and framework-specific icon metadata.
+| `placement` | Where | What `init` does |
+| --- | --- | --- |
+| `assets` | `docs/assets/` | Nothing; already correct |
+| `docs` | Anywhere else under `docs/` | **Move it into `docs/assets/`**, preserving set folders |
+| `app` | `public/`, `static/`, `src/`, `app/`, `assets/`, `www/`, `resources/`, `web/` | Reference only. Moving it would break the build or the served site |
+| `other` | Anywhere else | Reference only |
 
-For initial readiness, a final favicon or a clearly labeled bootstrap favicon is acceptable.
+`scripts/organize_assets.py --root . --apply` performs the `docs` moves deterministically and lists every document that mentions a moved file by name so links can be corrected. Run it during `init`, never during `chk` or `pchk`.
+
+#### Status
+
+- `PASS`: a final asset exists, whatever it is called and wherever it legitimately lives.
+- `PASS` with `placeholder` in the evidence: a `*-default.*` file stands in for it. Still list it under the report's missing-or-placeholder section.
+- `UNVERIFIED`: the file exists but its dimensions or wiring cannot be checked, for example an SVG where a pixel size is required, or an icon set with no application to reference it from.
+- `MISSING`: no file matches any pattern.
+- `N/A`: the project type does not need it, with the reason. A CLI tool needs no OG image.
+
+The OG image must be exactly 1200x630. Any other size is a finding, not a pass. If dimensions cannot be read, `UNVERIFIED`.
+
+Generate a missing favicon set with https://favicon.io/favicon-converter/ and a missing mobile app icon set with https://www.digia.tech/tools/app-icon-generator/. Recommend the tool rather than producing a fake final asset.
+
+### 1.6 Discovery and platform files
+
+These decide whether the product can be found, crawled, previewed, and installed. They are looked for in served roots only: the repository root, `public/`, `static/`, `app/`, `src/app/`, `www/`, `dist/`, and `docs/`. A `site.webmanifest` sitting in `docs/assets/favicon/` is a source asset, not a served manifest, and the difference matters.
+
+| File | Applies to | Note |
+| --- | --- | --- |
+| `robots.txt` | Any served site, including authenticated ones | An authenticated app still needs one, to disallow |
+| `sitemap.xml` | Public, indexable sites | May be generated at build time; check the build output or config |
+| `llms.txt` | Sites that want to be usable by AI agents | Newer convention; recommend, do not treat as blocking unless the brief asks |
+| Web app manifest | PWA and installable products | `site.webmanifest`, `manifest.webmanifest`, or `manifest.json` |
+
+`scripts/gep_scan.py --json` reports these under `discovery_files`.
+
+Metadata that lives in code rather than in a file, meaning page title, meta description, canonical URL, Open Graph tags, Twitter Card tags, and Schema.org structured data, is not something the scanner can judge. Read the application's head or metadata configuration and report what is there. Before any application code exists, these are `MISSING`, not `UNVERIFIED`.
 
 ## 2. Project type signals
 
@@ -97,14 +134,17 @@ Use this table in `chk` Mode B and in `init` step 6.7. A row fires when the brie
 
 | Signal words | Expected location | Default files | Consumed by |
 | --- | --- | --- | --- |
-| UI, UX, screens, wireframes, mockups, prototype, Figma, Adobe XD, design system | `docs/ui/` | `README.md` (design source, screen inventory, status), `screens.md`, `flows.md`, `screenshots/` | feature docs (UX States), `docs/01-architecture.md` (frontend) |
-| logo, brand, branding, identity | `docs/assets/` | `logo-default.svg` until the final `logo.svg` or `logo.png`; an inventory row in `docs/assets/README.md` | `docs/09-release-readiness.md` section 1, public metadata |
-| favicon, app icon, launcher icon | `docs/assets/` | `favicon-default.svg` until the final favicon set | `docs/09-release-readiness.md` section 1, app or build configuration |
+| UI, UX, screens, wireframes, mockups, prototype, Figma, Adobe XD, design system | `docs/ui/` | `README.md` (design source, screen inventory, status); the Claude Design package (`masterdoc.html` plus `pages/`, or `desktop/` and `mobile/`) or screenshots, per `references/ui-design.md` | feature docs (UX States), `docs/01-architecture.md` (frontend) |
+| logo, brand, branding, identity | `docs/assets/` | `logo-default.svg` until the final logo; an inventory row in `docs/assets/README.md` | `docs/09-release-readiness.md` section 1, public metadata |
+| banner, hero image, cover image, masthead | `docs/assets/` | `banner.*`; an inventory row in `docs/assets/README.md` | repository README, marketing surfaces |
+| favicon, app icon, launcher icon, touch icon | `docs/assets/` | `favicon-default.svg` until the final set from https://favicon.io/favicon-converter/ | `docs/09-release-readiness.md` section 1, app or build configuration |
 | OG image, Open Graph, social preview, share card, link preview | `docs/assets/` | `og-default.png` at exactly 1200x630 until the final `og.png` | `docs/09-release-readiness.md` sections 1 and 3, social metadata |
 | API, REST, GraphQL, endpoints, webhooks, SDK, OpenAPI | service boundaries in `docs/01-architecture.md` and the `API / Service Contract` section of each feature doc; `docs/api/` only for spec files | `docs/api/openapi.yaml` when a machine-readable spec exists | `docs/01-architecture.md`, `docs/09-release-readiness.md` section 6 |
 | payment, subscription, billing, checkout, Stripe, RevenueCat, MoonPay, in-app purchase | an ADR in `docs/04-decisions.md` naming the provider and a feature doc such as `docs/features/F00x-billing.md` | | `docs/09-release-readiness.md` section 2 |
 | auth, login, sign in, sign up, magic link, OAuth, SSO | a feature doc and the authentication part of `docs/01-architecture.md` | | `docs/09-release-readiness.md` sections 4 and 6 |
-| mobile, responsive, phone, tablet | mobile-readiness in `docs/01-architecture.md`; responsive states in `docs/ui/screens.md` | | `docs/09-release-readiness.md` section 4 |
+| mobile, responsive, phone, tablet | mobile-readiness in `docs/01-architecture.md`; responsive states in the design package | app icon set from https://www.digia.tech/tools/app-icon-generator/ | `docs/09-release-readiness.md` section 4 |
+| SEO, search engine, indexable, crawler, sitemap, robots.txt, llms.txt | the served root | `robots.txt`, `sitemap.xml`, `llms.txt` | `docs/09-release-readiness.md` section 3 |
+| PWA, progressive web app, installable, service worker, offline, add to home screen | the served root | `site.webmanifest` or `manifest.json`, plus the icon sizes it declares | `docs/09-release-readiness.md` sections 1 and 3 |
 
 Write one recommendation per gap in one of these two shapes:
 
@@ -149,6 +189,8 @@ Compare each document against the repository:
 | `docs/05-open-questions.md` | code and decisions | `Blocking: YES` items the code has already answered |
 | `docs/09-release-readiness.md` | actual evidence | rows marked `PASS` without evidence |
 | `docs/assets/README.md` | files under `docs/assets/` and public asset folders | inventory rows missing, or a placeholder listed as final |
+| asset placement | the `assets_misplaced` list from the scanner | any brand asset still loose under `docs/` outside `docs/assets/` |
+| discovery files | the served roots | the brief implies a public site but `robots.txt` or `sitemap.xml` is absent |
 | `docs/ui/README.md` | implemented screens | screen statuses no longer match the implementation |
 
 Overall: `GEP DOCS IN SYNC` when nothing is `MISSING` or `OUTDATED` and no required-structure item is `UNVERIFIED`; otherwise `GEP DOCS OUT OF SYNC`.
